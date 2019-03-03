@@ -9,7 +9,7 @@ QAQNetworkReq* CreateRequest()
 	return new QAQNetworkReqImpl;
 }
 
-void DeleteNetworkReq(QAQNetworkReq*req)
+void DeleteRequest(QAQNetworkReq*req)
 {
 	delete req;
 }

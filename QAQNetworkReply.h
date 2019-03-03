@@ -11,11 +11,16 @@ enum QAQNetworkReplyError
 class QAQNetworkReply
 {
 public:
-	QAQNetworkReply();
+	QAQNetworkReply()
+	: len_(-1)
+	, error_(REPLY_INIT)
+	, data_(nullptr)
+	{}
 
-	void FreeReply();
+	virtual ~QAQNetworkReply() {}
 
-	virtual void* GetData()
+
+	virtual char* GetData()
 	{
 		return data_;
 	}
@@ -29,7 +34,7 @@ public:
 		return error_;
 	}
 
-	virtual void SetData(void *data) {
+	virtual void SetData(char *data) {
 		data_ = data;
 	}
 
@@ -44,10 +49,10 @@ public:
 	}
 
 private:
-	virtual ~QAQNetworkReply() {}
+	
 
 	QAQNetworkReplyError error_;
-	void *data_;
+	char *data_;
 	int len_;
 };
 //

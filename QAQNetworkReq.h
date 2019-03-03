@@ -34,4 +34,4 @@ public:
 
 QAQNETWORK_LIB QAQNetworkReq* CreateRequest();
 
-QAQNETWORK_LIB void DeleteNetworkReq(QAQNetworkReq*);
+QAQNETWORK_LIB void DeleteRequest(QAQNetworkReq*);

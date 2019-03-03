@@ -2,7 +2,17 @@
 #include "QAQNetwork.h"
 #include "QAQNetworkImpl.h"
 
-QAQNetwork* CreateQAQNetwork()
+QAQNetwork* CreateNetwork()
 {
 	return new QAQNetworkImpl();
 }
+
+QAQNETWORK_LIB void DeleteNetwork(QAQNetwork* network)
+{
+	if (network)
+	{
+		network->DeleteReply();
+		delete network;
+	}
+}
+

@@ -24,10 +24,13 @@ public:
 
 //	virtual ASyncPost(QAQNetworkReq *, void *user,);
 
+	virtual void DeleteReply()=0;
 protected:
 	QAQNetworkReply* reply_;
 	QAQNetworkReq* req_;
 };
 
-QAQNETWORK_LIB QAQNetwork* CreateQAQNetwork();
+QAQNETWORK_LIB QAQNetwork* CreateNetwork();
+
+QAQNETWORK_LIB void DeleteNetwork(QAQNetwork*);
 
