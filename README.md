@@ -1,6 +1,6 @@
 
 ## HOW TO USE IT
-1、synchronize way
+1、used by synchronized way
 
 ```C++
 	QAQNetwork *network =  CreateNetwork();
