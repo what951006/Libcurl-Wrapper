@@ -1,4 +1,6 @@
 #pragma once
+#include "QAQNetworkReq.h"
+#include "QAQNetworkReply.h"
 
 #ifndef QAQNETWORK_STATIC
 	#ifdef QAQNETWORK_EXPORT
@@ -11,9 +13,6 @@
 #endif
 
 
-
-class QAQNetworkReq;
-class QAQNetworkReply;
 using DataCallBack = void(*)(QAQNetworkReply*, void*user);
 class QAQNetwork
 {

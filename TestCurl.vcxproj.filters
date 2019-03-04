@@ -45,12 +45,6 @@
     <ClCompile Include="QAQNetworkImpl.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="QAQNetworkReq.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="QAQNetworkReply.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="QAQNetworkReqImpl.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>

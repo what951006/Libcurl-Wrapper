@@ -24,7 +24,3 @@ public:
 	virtual char * GetUrl() const = 0;
 
 };
-
-QAQNETWORK_LIB QAQNetworkReq* CreateRequest();
-
-QAQNETWORK_LIB void DeleteRequest(QAQNetworkReq*);
