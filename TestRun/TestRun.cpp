@@ -17,9 +17,10 @@ int main()
 	QAQNetworkReply*reply = network->SyncGet(request);
 
 
-	printf(reply->GetData());
-
-
+	if (reply->GetError() == REPLY_NO_ERROR)
+	{
+		printf(reply->GetData());
+	}
 
 	DeleteRequest(request);
 	DeleteNetwork(network);

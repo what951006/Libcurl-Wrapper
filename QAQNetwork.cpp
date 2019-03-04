@@ -8,7 +8,7 @@ QAQNetwork* CreateNetwork()
 	return new QAQNetworkImpl();
 }
 
-QAQNETWORK_LIB void DeleteNetwork(QAQNetwork* network)
+void DeleteNetwork(QAQNetwork* network)
 {
 	if (network)
 	{
