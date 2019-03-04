@@ -1,6 +1,7 @@
 #include "stdafx.h"
 #include "QAQNetwork.h"
 #include "QAQNetworkImpl.h"
+#include "QAQNetworkReqImpl.h"
 
 QAQNetwork* CreateNetwork()
 {
@@ -16,3 +17,12 @@ QAQNETWORK_LIB void DeleteNetwork(QAQNetwork* network)
 	}
 }
 
+QAQNetworkReq* CreateRequest()
+{
+	return new QAQNetworkReqImpl;
+}
+
+void DeleteRequest(QAQNetworkReq*req)
+{
+	delete req;
+}

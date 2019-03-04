@@ -1,9 +1,13 @@
 #pragma once
 
-#ifdef QAQNETWORK_EXPORT
-#define QAQNETWORK_LIB _declspec(dllexport)
+#ifndef QAQNETWORK_STATIC
+	#ifdef QAQNETWORK_EXPORT
+	#define QAQNETWORK_LIB _declspec(dllexport)
+	#else
+	#define QAQNETWORK_LIB _declspec(dllimport)
+	#endif
 #else
-#define QAQNETWORK_LIB _declspec(dllimport)
+	#define QAQNETWORK_LIB
 #endif
 
 
@@ -34,3 +38,6 @@ QAQNETWORK_LIB QAQNetwork* CreateNetwork();
 
 QAQNETWORK_LIB void DeleteNetwork(QAQNetwork*);
 
+QAQNETWORK_LIB QAQNetworkReq* CreateRequest();
+
+QAQNETWORK_LIB void DeleteRequest(QAQNetworkReq*);

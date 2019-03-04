@@ -1,12 +1,5 @@
 #pragma once
 
-
-#ifdef QAQNETWORK_EXPORT
-#define QAQNETWORK_LIB _declspec(dllexport)
-#else
-#define QAQNETWORK_LIB _declspec(dllimport)
-#endif
-
 struct HttpHeader
 {
 	char *header_key;
