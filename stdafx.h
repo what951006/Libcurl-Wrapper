@@ -9,12 +9,3 @@
 
 #include <stdio.h>
 #include <tchar.h>
-
-
-
-// TODO: reference additional headers your program requires here
-#ifdef QAQNETWORK_EXPORT
-#define QAQNETWORK_LIB _declspec(dllexport)
-#else
-#define QAQNETWORK_LIB _declspec(dllimport)
-#endif

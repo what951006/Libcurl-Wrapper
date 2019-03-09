@@ -1,27 +1,22 @@
 #include "stdafx.h"
 #include "QAQNetworkImpl.h"
-#include "QAQNetworkReq.h"
-#include "QAQNetworkReply.h"
+
+#include <iostream>
+#include <string>
+using namespace std;
 
 
-
-size_t WriteMemoryCallback(void *ptr, size_t size, size_t nmemb, void *data)
-{
-	size_t realsize = size * nmemb;
-	struct MemoryStruct *mem = (struct MemoryStruct *)data;
-
-	mem->memory = (char *)realloc(mem->memory, mem->size + realsize + 1);
-	if (mem->memory)
-	{
-		memcpy(&(mem->memory[mem->size]), ptr, realsize);
-		mem->size += realsize;
-		mem->memory[mem->size] = 0;
-	}
-	return realsize;
-}
 
 
 QAQNetworkImpl::QAQNetworkImpl()
+	:user_(nullptr)
+	, data_cb_(nullptr)
+	, headers(nullptr)
+	, is_running_(false)
+	, data_progress_cb_(nullptr)
+	, inter_face_(nullptr)
+	, is_cancel_(false)
+	, reply_(nullptr)
 {
 	curl_ = curl_easy_init();
 }
@@ -29,43 +24,27 @@ QAQNetworkImpl::QAQNetworkImpl()
 
 QAQNetworkImpl::~QAQNetworkImpl()
 {
-	curl_easy_cleanup(curl_);
+	DeleteReply();
+	Stop();
 }
 
 QAQNetworkReply* QAQNetworkImpl::SyncGet(QAQNetworkReq * req)
 {
-	curl_easy_setopt(curl_, CURLOPT_SSL_VERIFYPEER, false);
-	curl_easy_setopt(curl_, CURLOPT_SSL_VERIFYHOST, true);
-	curl_easy_setopt(curl_, CURLOPT_URL, req->GetUrl());
-
-	/* example.com is redirected, so we tell libcurl to follow redirection */
-	curl_easy_setopt(curl_, CURLOPT_FOLLOWLOCATION, 1L);
-	curl_easy_setopt(curl_, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
-	curl_easy_setopt(curl_, CURLOPT_WRITEDATA, (void*)&respond_);
-
-	curl_easy_setopt(curl_, CURLOPT_VERBOSE, 0L);
-	/* Perform the request, res will get the return code */
-	res = curl_easy_perform(curl_);
-
-	/* Check for errors */
-	if (res != CURLE_OK)
-	{
-		reply_ = new QAQNetworkReply;
-		return reply_;
-	}
-	else
-	{
-		reply_ = new QAQNetworkReply;
-		reply_->SetData(respond_.memory);
-		reply_->SetLength(respond_.size);
-		reply_->SetError(REPLY_NO_ERROR);
-		return reply_;
-	}
+	is_running_ = true;
+	req_ = req;
+	ASyncGetThread();
+	return reply_;
 }
 
-void QAQNetworkImpl::ASyncGet(QAQNetworkReq *, void *user, DataCallBack)
+void QAQNetworkImpl::ASyncGet(QAQNetworkReq *req, void *user, DataCallBack data_cb, DataProgress progress_cb)
 {
-	//throw std::logic_error("The method or operation is not implemented.");
+	is_running_ = true;
+	req_ = req;
+	user_ = user;
+	data_cb_ = data_cb;
+	data_progress_cb_ = progress_cb;
+	async_thread_ = std::move( std::thread(&QAQNetworkImpl::ASyncGetThread,this) );
+
 }
 
 void QAQNetworkImpl::DeleteReply()
@@ -75,4 +54,266 @@ void QAQNetworkImpl::DeleteReply()
 		delete reply_;
 		reply_ = nullptr;
 	}
+}
+
+bool QAQNetworkImpl::IsRunningASync()
+{
+	return is_running_;
+}
+
+void QAQNetworkImpl::Stop()
+{
+	is_cancel_ = true; //set quit flag
+	if (async_thread_.joinable())
+	{
+		async_thread_.join();//wait for thread to quit
+
+		if (inter_face_)
+			inter_face_->OnClose();
+	}
+
+	if(headers)
+		curl_slist_free_all(headers); /* free the header list */
+	headers = nullptr;
+	if (curl_)
+		curl_easy_cleanup(curl_);
+	curl_ = nullptr;
+}
+
+void QAQNetworkImpl::ASyncGet2(QAQNetworkReq *req, QAQNetworkInterface *face)
+{
+	is_running_ = true;
+	inter_face_ = face;
+	req_ = req;
+	async_thread_ = std::move(std::thread(&QAQNetworkImpl::ASyncGetThread, this));
+}
+
+void QAQNetworkImpl::ASyncPost2(QAQNetworkReq *req, const char*post_data, QAQNetworkInterface *face)
+{
+	is_running_ = true;
+	inter_face_ = face;
+	post_data_ = post_data;
+	req_ = req;
+	//throw std::logic_error("The method or operation is not implemented.");
+	async_thread_ = std::move(std::thread(&QAQNetworkImpl::ASyncPostThread, this));
+
+}
+
+QAQNetworkReply* QAQNetworkImpl::SyncPost(QAQNetworkReq * req, const char*post_data)
+{
+	post_data_ = post_data;
+	req_ = req;
+	ASyncPostThread();
+	return reply_;
+}
+
+void QAQNetworkImpl::ASyncPost(QAQNetworkReq *req, const char*post_data, void *user, DataCallBack data_cb, DataProgress progress_cb)
+{
+	is_running_ = true;
+	post_data_ = post_data;
+	req_ = req;
+	user_ = user;
+	data_cb_ = data_cb;
+	data_progress_cb_ = progress_cb;
+	//throw std::logic_error("The method or operation is not implemented.");
+	async_thread_ = std::move(std::thread(&QAQNetworkImpl::ASyncPostThread, this));
+	
+}
+
+void QAQNetworkImpl::ASyncGetThread()
+{
+	is_cancel_ = false;
+	is_running_ = true;
+	SetShareHandle(curl_);
+	for (int i = 0; i < req_->GetHeaderCount(); ++i)
+	{
+		headers = curl_slist_append(headers, (req_->GetHeader() + i)->header_info);
+	}
+	//set headers
+	if(req_->GetHeaderCount()>0)
+		curl_easy_setopt(curl_, CURLOPT_HTTPHEADER, headers);
+
+	curl_easy_setopt(curl_, CURLOPT_SSL_VERIFYPEER, false);
+	curl_easy_setopt(curl_, CURLOPT_SSL_VERIFYHOST, false);
+
+	curl_easy_setopt(curl_, CURLOPT_URL, req_->GetUrl());
+
+	/* example.com is redirected, so we tell libcurl to follow redirection */
+	curl_easy_setopt(curl_, CURLOPT_FOLLOWLOCATION, 1L);
+
+	//begin write function
+	curl_easy_setopt(curl_, CURLOPT_WRITEFUNCTION, QAQNetworkImpl::WriteMemoryCallback);
+	curl_easy_setopt(curl_, CURLOPT_WRITEDATA, (void*)this);
+	//end write function
+
+	//begin progress
+	curl_easy_setopt(curl_, CURLOPT_NOPROGRESS, FALSE);
+	curl_easy_setopt(curl_, CURLOPT_PROGRESSFUNCTION, QAQNetworkImpl::ProgressCallback);
+	curl_easy_setopt(curl_, CURLOPT_PROGRESSDATA, this);
+	//end progress
+
+	curl_easy_setopt(curl_, CURLOPT_VERBOSE, 0L);
+	/////* 设置连接超时,单位:毫秒 */
+	curl_easy_setopt(curl_, CURLOPT_CONNECTTIMEOUT_MS, 10000L);
+
+	/* Perform the request, res will get the return code */
+	CURLcode res = curl_easy_perform(curl_);
+
+	/*manual stop*/
+	if (res != CURLE_ABORTED_BY_CALLBACK && res != CURLE_WRITE_ERROR)//CURLE_ABORTED_BY_CALLBACK
+	{
+		/* Check for errors */
+		if (res != CURLE_OK)
+		{
+			reply_ = new QAQNetworkReply;
+		}
+		else
+		{
+			reply_ = new QAQNetworkReply;
+			reply_->SetData((char*)result_.c_str());
+			reply_->SetLength(result_.size());
+			reply_->SetError(REPLY_NO_ERROR);
+		}
+
+		if (data_cb_)
+		{
+			data_cb_(reply_, user_);
+		}
+		else if (inter_face_)
+		{
+			inter_face_->OnDataReply(reply_);
+		}
+	}
+	is_running_ = false;
+}
+
+void QAQNetworkImpl::ASyncPostThread()
+{
+	is_cancel_ = false;
+	is_running_ = true;
+	SetShareHandle(curl_);
+	for (int i = 0; i < req_->GetHeaderCount(); ++i)
+	{
+		headers = curl_slist_append(headers, (req_->GetHeader() + i)->header_info);
+	}
+	//set headers
+	if (req_->GetHeaderCount() > 0)
+		curl_easy_setopt(curl_, CURLOPT_HTTPHEADER, headers);
+
+	/*post data here*/
+	curl_easy_setopt(curl_, CURLOPT_POST, 1L);
+	curl_easy_setopt(curl_, CURLOPT_POSTFIELDS, post_data_.c_str());
+	curl_easy_setopt(curl_, CURLOPT_POSTFIELDSIZE, post_data_.size());
+
+
+	curl_easy_setopt(curl_, CURLOPT_SSL_VERIFYPEER, false);
+	curl_easy_setopt(curl_, CURLOPT_SSL_VERIFYHOST, false);
+
+	curl_easy_setopt(curl_, CURLOPT_URL, req_->GetUrl());
+
+	/* example.com is redirected, so we tell libcurl to follow redirection */
+	curl_easy_setopt(curl_, CURLOPT_FOLLOWLOCATION, 1L);
+
+	//begin write function
+	curl_easy_setopt(curl_, CURLOPT_WRITEFUNCTION, QAQNetworkImpl::WriteMemoryCallback);
+	curl_easy_setopt(curl_, CURLOPT_WRITEDATA, (void*)this);
+	//end write function
+
+	//begin progress
+	curl_easy_setopt(curl_, CURLOPT_NOPROGRESS, FALSE);
+	curl_easy_setopt(curl_, CURLOPT_PROGRESSFUNCTION, QAQNetworkImpl::ProgressCallback);
+	curl_easy_setopt(curl_, CURLOPT_PROGRESSDATA, this);
+	//end progress
+
+	curl_easy_setopt(curl_, CURLOPT_VERBOSE, 0L);
+	/////* 设置连接超时,单位:毫秒 */
+	curl_easy_setopt(curl_, CURLOPT_CONNECTTIMEOUT_MS, 10000L);
+
+	/* Perform the request, res will get the return code */
+	CURLcode res = curl_easy_perform(curl_);
+
+	/*manual stop*/
+	if (res != CURLE_ABORTED_BY_CALLBACK && res != CURLE_WRITE_ERROR)//CURLE_ABORTED_BY_CALLBACK
+	{
+		/* Check for errors */
+		if (res != CURLE_OK)
+		{
+			reply_ = new QAQNetworkReply;
+		}
+		else
+		{
+			reply_ = new QAQNetworkReply;
+			reply_->SetData((char*)result_.c_str());
+			reply_->SetLength(result_.size());
+			reply_->SetError(REPLY_NO_ERROR);
+		}
+
+		if (data_cb_)
+		{
+			data_cb_(reply_, user_);
+		}
+		else if (inter_face_)
+		{
+			inter_face_->OnDataReply(reply_);
+		}
+	}
+	is_running_ = false;
+}
+
+int QAQNetworkImpl::OnProgress(double t, double d)
+{
+	if (data_progress_cb_)
+		data_progress_cb_(d, t, user_);
+
+	else if (inter_face_)
+	{
+		inter_face_->OnDataProgress(t, d);
+	}
+
+	return 0;
+}
+
+void QAQNetworkImpl::SetShareHandle(CURL *curl_handle)
+{
+	static CURLSH *shared_handle = nullptr;
+
+	if (!shared_handle)
+	{
+		shared_handle = curl_share_init();
+		curl_share_setopt(shared_handle, CURLSHOPT_SHARE, CURL_LOCK_DATA_DNS);
+	}
+
+	curl_easy_setopt(curl_handle, CURLOPT_SHARE, shared_handle);
+	curl_easy_setopt(curl_handle, CURLOPT_DNS_CACHE_TIMEOUT, 60 * 5);
+}
+
+size_t QAQNetworkImpl::WriteMemoryCallback(void *buffer, size_t size, size_t count, void * stream)
+{
+	QAQNetworkImpl* pStream = static_cast<QAQNetworkImpl *>(stream);
+
+	if (pStream)
+	{
+		if (pStream->is_cancel_)
+		{
+			return 0;
+		}
+		pStream->result_.append((char *)buffer, size * count);
+		return size * count;
+	}
+	return 0;
+};
+
+
+int QAQNetworkImpl::ProgressCallback(char *user,
+	double t, /* dltotal */
+	double d, /* dlnow */
+	double ultotal,
+	double ulnow)
+{
+	QAQNetworkImpl* imp = (QAQNetworkImpl*)user;
+	if (imp)
+	{
+		return imp->OnProgress(t, d);
+	}
+	return 0;
 }

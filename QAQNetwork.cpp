@@ -3,26 +3,18 @@
 #include "QAQNetworkImpl.h"
 #include "QAQNetworkReqImpl.h"
 
-QAQNetwork* CreateNetwork()
+
+
+void CreateNetwork(QAQNetworkReq** req, QAQNetwork**net)
 {
-	return new QAQNetworkImpl();
+	*req = new QAQNetworkReqImpl;
+	*net = new QAQNetworkImpl;
 }
 
-void DeleteNetwork(QAQNetwork* network)
+void DeleteNetwork(QAQNetworkReq** req, QAQNetwork** net)
 {
-	if (network)
-	{
-		network->DeleteReply();
-		delete network;
-	}
-}
-
-QAQNetworkReq* CreateRequest()
-{
-	return new QAQNetworkReqImpl;
-}
-
-void DeleteRequest(QAQNetworkReq*req)
-{
-	delete req;
+	delete *req;
+	delete *net;
+	req = nullptr;
+	net = nullptr;
 }

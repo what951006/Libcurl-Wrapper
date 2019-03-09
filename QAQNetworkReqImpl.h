@@ -2,7 +2,7 @@
 
 #include <string>
 
-#include "QAQNetworkReq.h"
+#include "QAQNetwork.h"
 class QAQNetworkReqImpl :
 	public QAQNetworkReq
 {

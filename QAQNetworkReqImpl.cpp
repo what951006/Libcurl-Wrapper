@@ -1,18 +1,19 @@
 ﻿#include "stdafx.h"
 #include "QAQNetworkReqImpl.h"
 
-#define MAX_HEADER
+#define MAX_HEADER 16
 
 QAQNetworkReqImpl::QAQNetworkReqImpl()
 	:header_(nullptr)
 	,count_(0)
 {
-	header_ = new HttpHeader(MAX_HEADER);
+	header_ = new HttpHeader[MAX_HEADER];
 }
 
 
 QAQNetworkReqImpl::~QAQNetworkReqImpl()
 {
+	delete[] header_;
 }
 
 void QAQNetworkReqImpl::SetHeader(HttpHeader header)
