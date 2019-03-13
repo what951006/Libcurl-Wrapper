@@ -5,7 +5,6 @@
 #include <thread>
 #include <atomic>
 #include <mutex>
-#include <condition_variable>
 #include <curl/curl.h>
 
 
@@ -29,11 +28,11 @@ public:
 
 	virtual void ASyncPost2(QAQNetworkReq *, const char*post_data, QAQNetworkInterface *) override;
 
-	virtual bool IsRunningASync() override;
-
+protected:
 	virtual void Stop() override;
 
-protected:
+	virtual void CleanInterface() override;
+
 	void DeleteReply();
 
 	void QAQNetworkImpl::SetShareHandle(CURL *curl_handle);
@@ -71,5 +70,8 @@ protected:
 	QAQNetworkReply *reply_;
 	QAQNetworkReq * req_;
 	std::string result_;
+
+
+
 };
 

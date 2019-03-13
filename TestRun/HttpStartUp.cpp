@@ -38,6 +38,8 @@ void HttpStartUp::OnDataReply(QAQNetworkReply*reply)
 {
 	// throw std::logic_error("The method or operation is not implemented.");
 	printf("OnDataReply:success \n error code:%d ,Data: %s\n", reply->GetError() , reply->GetData());
+
+	delete this;
 }
 //
 void HttpStartUp::OnDataProgress(double total, double now)

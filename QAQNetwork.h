@@ -30,7 +30,6 @@ public:
 
 	virtual void OnDataProgress(double total, double now) {};
 
-	virtual void OnClose() {};
 };
 
 class QAQNetwork
@@ -52,10 +51,9 @@ public:
 
 	virtual void ASyncPost2(QAQNetworkReq *, const char*post_data,QAQNetworkInterface *)=0;
 
-	virtual void Stop()=0;
+	virtual void Stop() = 0;
 
-	virtual bool IsRunningASync() = 0;
-
+	virtual void CleanInterface() = 0;
 protected:
 
 	QAQNetworkReply* reply_;
@@ -63,10 +61,7 @@ protected:
 };
 
 
-struct HttpHeader
-{
-	char *header_info;
-};
+
 
 class QAQNetworkReq
 {
@@ -75,11 +70,11 @@ public:
 
 	virtual ~QAQNetworkReq() {};
 
-	virtual void SetHeader(HttpHeader header) = 0;
+	virtual void SetHeader(const char * header) = 0;
 
 	virtual void SetUrl(const char * url) = 0;
 
-	virtual HttpHeader* GetHeader() = 0;
+	virtual const char * GetHeader(int ) = 0;
 
 	virtual int GetHeaderCount() = 0;
 

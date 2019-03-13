@@ -43,7 +43,7 @@ void QAQNetworkImpl::ASyncGet(QAQNetworkReq *req, void *user, DataCallBack data_
 	user_ = user;
 	data_cb_ = data_cb;
 	data_progress_cb_ = progress_cb;
-	async_thread_ = std::move( std::thread(&QAQNetworkImpl::ASyncGetThread,this) );
+	async_thread_ = std::move(std::thread(&QAQNetworkImpl::ASyncGetThread, this));
 
 }
 
@@ -56,29 +56,30 @@ void QAQNetworkImpl::DeleteReply()
 	}
 }
 
-bool QAQNetworkImpl::IsRunningASync()
-{
-	return is_running_;
-}
 
 void QAQNetworkImpl::Stop()
 {
 	is_cancel_ = true; //set quit flag
-	if (async_thread_.joinable())
+	if (std::this_thread::get_id() != async_thread_.get_id())
 	{
-		async_thread_.join();//wait for thread to quit
-
-		if (inter_face_)
-			inter_face_->OnClose();
+		if (async_thread_.joinable())
+		{
+			async_thread_.join();//wait for thread to quit
+		}
 	}
 
-	if(headers)
+	if (headers)
 		curl_slist_free_all(headers); /* free the header list */
 	headers = nullptr;
 	if (curl_)
 		curl_easy_cleanup(curl_);
 	curl_ = nullptr;
 }
+
+//void QAQNetworkImpl::ClearInterface()
+//{
+//	inter_face_ = nullptr;
+//}
 
 void QAQNetworkImpl::ASyncGet2(QAQNetworkReq *req, QAQNetworkInterface *face)
 {
@@ -117,7 +118,7 @@ void QAQNetworkImpl::ASyncPost(QAQNetworkReq *req, const char*post_data, void *u
 	data_progress_cb_ = progress_cb;
 	//throw std::logic_error("The method or operation is not implemented.");
 	async_thread_ = std::move(std::thread(&QAQNetworkImpl::ASyncPostThread, this));
-	
+
 }
 
 void QAQNetworkImpl::ASyncGetThread()
@@ -127,10 +128,10 @@ void QAQNetworkImpl::ASyncGetThread()
 	SetShareHandle(curl_);
 	for (int i = 0; i < req_->GetHeaderCount(); ++i)
 	{
-		headers = curl_slist_append(headers, (req_->GetHeader() + i)->header_info);
+		headers = curl_slist_append(headers, req_->GetHeader(i));
 	}
 	//set headers
-	if(req_->GetHeaderCount()>0)
+	if (req_->GetHeaderCount() > 0)
 		curl_easy_setopt(curl_, CURLOPT_HTTPHEADER, headers);
 
 	curl_easy_setopt(curl_, CURLOPT_SSL_VERIFYPEER, false);
@@ -154,7 +155,7 @@ void QAQNetworkImpl::ASyncGetThread()
 
 	curl_easy_setopt(curl_, CURLOPT_VERBOSE, 0L);
 	/////* 设置连接超时,单位:毫秒 */
-	curl_easy_setopt(curl_, CURLOPT_CONNECTTIMEOUT_MS, 10000L);
+	curl_easy_setopt(curl_, CURLOPT_CONNECTTIMEOUT_MS, 5000L);
 
 	/* Perform the request, res will get the return code */
 	CURLcode res = curl_easy_perform(curl_);
@@ -194,7 +195,7 @@ void QAQNetworkImpl::ASyncPostThread()
 	SetShareHandle(curl_);
 	for (int i = 0; i < req_->GetHeaderCount(); ++i)
 	{
-		headers = curl_slist_append(headers, (req_->GetHeader() + i)->header_info);
+		headers = curl_slist_append(headers, req_->GetHeader(i));
 	}
 	//set headers
 	if (req_->GetHeaderCount() > 0)
@@ -227,7 +228,7 @@ void QAQNetworkImpl::ASyncPostThread()
 
 	curl_easy_setopt(curl_, CURLOPT_VERBOSE, 0L);
 	/////* 设置连接超时,单位:毫秒 */
-	curl_easy_setopt(curl_, CURLOPT_CONNECTTIMEOUT_MS, 10000L);
+	curl_easy_setopt(curl_, CURLOPT_CONNECTTIMEOUT_MS, 5000L);
 
 	/* Perform the request, res will get the return code */
 	CURLcode res = curl_easy_perform(curl_);
@@ -303,6 +304,11 @@ size_t QAQNetworkImpl::WriteMemoryCallback(void *buffer, size_t size, size_t cou
 	return 0;
 };
 
+
+void QAQNetworkImpl::CleanInterface()
+{
+	inter_face_ = nullptr;
+}
 
 int QAQNetworkImpl::ProgressCallback(char *user,
 	double t, /* dltotal */

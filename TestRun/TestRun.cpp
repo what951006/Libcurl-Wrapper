@@ -62,17 +62,18 @@ int main()
 	//
 	//delete startup;
 
-	//for (int i = 0; i < 100; ++i)
-	//{
-	//	HttpStartUp startup;
-	//	startup.Request();
+	//for (int i = 0; i < 10; ++i)
+	{
+		HttpStartUp *startup = new HttpStartUp;
+		startup->Request();
 
-	//	
-	//	Sleep(1000);
-	//}
+		
+		Sleep(1000);
+		
+	}
 	//
-	HttpStartUp startup;
-	startup.Request();
+	/*HttpStartUp startup;
+	startup.Request();*/
 
 	//HttpStartUp startup2;
 	//startup2.Request();

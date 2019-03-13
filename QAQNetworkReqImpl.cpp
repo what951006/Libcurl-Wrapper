@@ -1,25 +1,22 @@
 ﻿#include "stdafx.h"
 #include "QAQNetworkReqImpl.h"
 
-#define MAX_HEADER 16
+
 
 QAQNetworkReqImpl::QAQNetworkReqImpl()
-	:header_(nullptr)
-	,count_(0)
 {
-	header_ = new HttpHeader[MAX_HEADER];
+	
 }
 
 
 QAQNetworkReqImpl::~QAQNetworkReqImpl()
 {
-	delete[] header_;
+	
 }
 
-void QAQNetworkReqImpl::SetHeader(HttpHeader header)
+void QAQNetworkReqImpl::SetHeader(const char * header )
 {
-	header_[count_++] = header;
-
+	headers_.emplace_back(header);
 }
 
 void QAQNetworkReqImpl::SetUrl(const char * url)
@@ -27,14 +24,18 @@ void QAQNetworkReqImpl::SetUrl(const char * url)
 	url_ = url;
 }
 
-HttpHeader* QAQNetworkReqImpl::GetHeader()
+const char * QAQNetworkReqImpl::GetHeader(int index)
 {
-	return header_;
+	if (index >= headers_.size())
+	{
+		return nullptr;
+	}
+	return headers_.at(index).c_str();
 }
 
 int QAQNetworkReqImpl::GetHeaderCount()
 {
-	return count_;
+	return headers_.size();
 }
 
 char * QAQNetworkReqImpl::GetUrl() const

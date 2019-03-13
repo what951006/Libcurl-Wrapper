@@ -1,20 +1,16 @@
 #include "stdafx.h"
 #include "QAQNetwork.h"
-#include "QAQNetworkImpl.h"
-#include "QAQNetworkReqImpl.h"
+#include "QAQNetworkFactory.h"
 
+QAQNetworkFactory factory_;
 
 
 void CreateNetwork(QAQNetworkReq** req, QAQNetwork**net)
 {
-	*req = new QAQNetworkReqImpl;
-	*net = new QAQNetworkImpl;
+	factory_.CreateNetwork(req, net);
 }
 
 void DeleteNetwork(QAQNetworkReq** req, QAQNetwork** net)
 {
-	delete *req;
-	delete *net;
-	req = nullptr;
-	net = nullptr;
+	factory_.DeleteNetwork(*req, *net);
 }
