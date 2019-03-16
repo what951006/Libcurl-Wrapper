@@ -13,36 +13,43 @@ QAQNetworkImpl::QAQNetworkImpl()
 	, data_cb_(nullptr)
 	, headers(nullptr)
 	, is_running_(false)
-	, data_progress_cb_(nullptr)
+	, pro_cb_(nullptr)
 	, inter_face_(nullptr)
 	, is_cancel_(false)
 	, reply_(nullptr)
 {
-	curl_ = curl_easy_init();
+	
 }
 
 
 QAQNetworkImpl::~QAQNetworkImpl()
 {
-	DeleteReply();
 	Stop();
 }
 
-QAQNetworkReply* QAQNetworkImpl::SyncGet(QAQNetworkReq * req)
+QAQNetworkReply* QAQNetworkImpl::SyncGet(QAQNetworkReq * req, void *user , DataCallBack data_cb, DataProgress pro_cb)
 {
 	is_running_ = true;
 	req_ = req;
+
+	user_ = user;
+	data_cb_ = data_cb;
+	pro_cb_ = pro_cb;
+	
+
 	ASyncGetThread();
 	return reply_;
 }
 
-void QAQNetworkImpl::ASyncGet(QAQNetworkReq *req, void *user, DataCallBack data_cb, DataProgress progress_cb)
+void QAQNetworkImpl::ASyncGet(QAQNetworkReq *req, void *user, DataCallBack data_cb, DataProgress pro_cb)
 {
 	is_running_ = true;
 	req_ = req;
+
 	user_ = user;
 	data_cb_ = data_cb;
-	data_progress_cb_ = progress_cb;
+	pro_cb_ = pro_cb;
+	
 	async_thread_ = std::move(std::thread(&QAQNetworkImpl::ASyncGetThread, this));
 
 }
@@ -68,6 +75,8 @@ void QAQNetworkImpl::Stop()
 		}
 	}
 
+	DeleteReply();
+
 	if (headers)
 		curl_slist_free_all(headers); /* free the header list */
 	headers = nullptr;
@@ -76,10 +85,6 @@ void QAQNetworkImpl::Stop()
 	curl_ = nullptr;
 }
 
-//void QAQNetworkImpl::ClearInterface()
-//{
-//	inter_face_ = nullptr;
-//}
 
 void QAQNetworkImpl::ASyncGet2(QAQNetworkReq *req, QAQNetworkInterface *face)
 {
@@ -100,22 +105,29 @@ void QAQNetworkImpl::ASyncPost2(QAQNetworkReq *req, const char*post_data, QAQNet
 
 }
 
-QAQNetworkReply* QAQNetworkImpl::SyncPost(QAQNetworkReq * req, const char*post_data)
+QAQNetworkReply* QAQNetworkImpl::SyncPost(QAQNetworkReq * req, const char*post_data, void *user, DataCallBack data_cb, DataProgress pro_cb)
 {
 	post_data_ = post_data;
 	req_ = req;
+	
+	user_ = user;
+	data_cb_ = data_cb;
+	pro_cb_ = pro_cb;
+
 	ASyncPostThread();
 	return reply_;
 }
 
-void QAQNetworkImpl::ASyncPost(QAQNetworkReq *req, const char*post_data, void *user, DataCallBack data_cb, DataProgress progress_cb)
+void QAQNetworkImpl::ASyncPost(QAQNetworkReq *req, const char*post_data, void *user, DataCallBack data_cb, DataProgress pro_cb)
 {
 	is_running_ = true;
 	post_data_ = post_data;
 	req_ = req;
+
 	user_ = user;
 	data_cb_ = data_cb;
-	data_progress_cb_ = progress_cb;
+	pro_cb_ = pro_cb;
+
 	//throw std::logic_error("The method or operation is not implemented.");
 	async_thread_ = std::move(std::thread(&QAQNetworkImpl::ASyncPostThread, this));
 
@@ -125,6 +137,7 @@ void QAQNetworkImpl::ASyncGetThread()
 {
 	is_cancel_ = false;
 	is_running_ = true;
+	curl_ = curl_easy_init();
 	SetShareHandle(curl_);
 	for (int i = 0; i < req_->GetHeaderCount(); ++i)
 	{
@@ -192,6 +205,8 @@ void QAQNetworkImpl::ASyncPostThread()
 {
 	is_cancel_ = false;
 	is_running_ = true;
+
+	curl_ = curl_easy_init();
 	SetShareHandle(curl_);
 	for (int i = 0; i < req_->GetHeaderCount(); ++i)
 	{
@@ -263,8 +278,8 @@ void QAQNetworkImpl::ASyncPostThread()
 
 int QAQNetworkImpl::OnProgress(double t, double d)
 {
-	if (data_progress_cb_)
-		data_progress_cb_(d, t, user_);
+	if (pro_cb_)
+		pro_cb_(d, t, user_);
 
 	else if (inter_face_)
 	{

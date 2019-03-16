@@ -6,8 +6,7 @@
 #include "QAQNetworkReqImpl.h"
 QAQNetworkFactory::QAQNetworkFactory()
 {
-	quit_ = false;
-	thread_ = std::move(std::thread(&QAQNetworkFactory::FactoryThread,this));
+	quit_ = false;	
 }
 
 
@@ -22,6 +21,10 @@ QAQNetworkFactory::~QAQNetworkFactory()
 
 void QAQNetworkFactory::CreateNetwork(QAQNetworkReq** req, QAQNetwork** net)
 {
+	if (!thread_.joinable())
+	{
+		thread_ = std::move(std::thread(&QAQNetworkFactory::FactoryThread, this));
+	}
 	*net = new QAQNetworkImpl;
 	*req = new QAQNetworkReqImpl;
 }
@@ -41,13 +44,13 @@ void QAQNetworkFactory::DeleteNetwork(QAQNetworkReq* req, QAQNetwork* net)
 	}
 }
 
-void QAQNetworkFactory::FactoryThread()
+void QAQNetworkFactory::FactoryThread(QAQNetworkFactory* factory)
 {
-	while (!quit_)
+	while (!factory->quit_)
 	{
 		std::this_thread::sleep_for(std::chrono::microseconds(20));
 		QAQNetwork* net;
-		if (que_.TryPop(net))
+		if (factory->que_.TryPop(net))
 			delete net;
 	}
 }

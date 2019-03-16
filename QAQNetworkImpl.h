@@ -16,9 +16,9 @@ public:
 	QAQNetworkImpl();
 	~QAQNetworkImpl();
 
-	virtual QAQNetworkReply* SyncGet(QAQNetworkReq * req) override;
+	virtual QAQNetworkReply* SyncGet(QAQNetworkReq * req, void *user = nullptr, DataCallBack data_cb = nullptr, DataProgress pro_cb= nullptr) override;
 
-	virtual QAQNetworkReply* SyncPost(QAQNetworkReq * req, const char*post_data) override;
+	virtual QAQNetworkReply* SyncPost(QAQNetworkReq * req, const char*post_data, void *user = nullptr, DataCallBack data_cb = nullptr, DataProgress pro_cb = nullptr) override;
 
 	virtual void ASyncGet(QAQNetworkReq *, void *user, DataCallBack, DataProgress=nullptr) override;
 
@@ -32,6 +32,7 @@ protected:
 	virtual void Stop() override;
 
 	virtual void CleanInterface() override;
+
 
 	void DeleteReply();
 
@@ -60,7 +61,7 @@ protected:
 	QAQNetworkInterface * inter_face_;
 	void * user_;
 	DataCallBack data_cb_;
-	DataProgress data_progress_cb_;
+	DataProgress pro_cb_;
 	//////////////////////////////////////////////////////////////////////////
 
 	

@@ -39,9 +39,9 @@ public:
 	virtual ~QAQNetwork() {};
 
 
-	virtual QAQNetworkReply* SyncGet(QAQNetworkReq * req) = 0;
+	virtual QAQNetworkReply* SyncGet(QAQNetworkReq * req, void *user = nullptr, DataCallBack data_cb= nullptr, DataProgress pro_cb= nullptr) = 0;
 
-	virtual QAQNetworkReply* SyncPost(QAQNetworkReq * req, const char*post_data) = 0;
+	virtual QAQNetworkReply* SyncPost(QAQNetworkReq * req, const char*post_data, void *user = nullptr, DataCallBack data_cb = nullptr, DataProgress pro_cb = nullptr) = 0;
 
 	virtual void ASyncGet(QAQNetworkReq *,void *user, DataCallBack, DataProgress = nullptr) = 0;
 
@@ -137,7 +137,7 @@ private:
 };
 
 
-QAQNETWORK_LIB void CreateNetwork(QAQNetworkReq**,QAQNetwork**);
+extern "C" QAQNETWORK_LIB void CreateNetwork(QAQNetworkReq**,QAQNetwork**);
 
 //QAQNETWORK_LIB QAQNetworkReq* CreateRequest();
 //
@@ -146,4 +146,4 @@ QAQNETWORK_LIB void CreateNetwork(QAQNetworkReq**,QAQNetwork**);
 //QAQNETWORK_LIB void DeleteNetwork(QAQNetwork*);
 
 //this is for async
-QAQNETWORK_LIB void DeleteNetwork(QAQNetworkReq**, QAQNetwork**);
+extern "C" QAQNETWORK_LIB void DeleteNetwork(QAQNetworkReq**, QAQNetwork**);

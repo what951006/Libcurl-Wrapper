@@ -15,7 +15,7 @@ public:
 	
 	void DeleteNetwork(QAQNetworkReq*, QAQNetwork*);
 
-	void FactoryThread();
+	static void FactoryThread(QAQNetworkFactory*);
 
 
 	ThreadSafe_Queue<QAQNetwork*> que_;
