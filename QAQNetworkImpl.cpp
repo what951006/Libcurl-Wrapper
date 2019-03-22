@@ -105,12 +105,12 @@ void QAQNetworkImpl::ASyncPost2(QAQNetworkReq *req, const char*post_data, QAQNet
 
 }
 
-const char *  QAQNetworkImpl::GetMemPtr()
+const char *  QAQNetworkImpl::GetMemoryData()
 {
 	return result_.c_str();
 }
 
-int QAQNetworkImpl::GetMemLen()
+int QAQNetworkImpl::GetMemorySize()
 {
 	std::lock_guard<std::mutex> lg(mutex_);
 	size_t len = result_.length();

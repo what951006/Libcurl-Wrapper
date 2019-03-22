@@ -28,9 +28,9 @@ public:
 
 	virtual void ASyncPost2(QAQNetworkReq *, const char*post_data, QAQNetworkInterface *) override;
 
-	virtual const char * GetMemPtr() override;
+	virtual const char * GetMemoryData() override;
 
-	virtual int GetMemLen() override;
+	virtual int GetMemorySize() override;
 protected:
 	virtual void Stop() override;
 
