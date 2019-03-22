@@ -105,6 +105,18 @@ void QAQNetworkImpl::ASyncPost2(QAQNetworkReq *req, const char*post_data, QAQNet
 
 }
 
+const char *  QAQNetworkImpl::GetMemPtr()
+{
+	return result_.c_str();
+}
+
+int QAQNetworkImpl::GetMemLen()
+{
+	std::lock_guard<std::mutex> lg(mutex_);
+	size_t len = result_.length();
+	return len;
+}
+
 QAQNetworkReply* QAQNetworkImpl::SyncPost(QAQNetworkReq * req, const char*post_data, void *user, DataCallBack data_cb, DataProgress pro_cb)
 {
 	post_data_ = post_data;
@@ -289,6 +301,18 @@ int QAQNetworkImpl::OnProgress(double t, double d)
 	return 0;
 }
 
+int QAQNetworkImpl::OnWrite(const char *buffer, int len)
+{
+	if (is_cancel_)
+	{
+		return 0;
+	}
+
+	std::lock_guard<std::mutex> lg(mutex_);
+	result_.append((char *)buffer, len);
+	return len;
+}
+
 void QAQNetworkImpl::SetShareHandle(CURL *curl_handle)
 {
 	static CURLSH *shared_handle = nullptr;
@@ -306,15 +330,9 @@ void QAQNetworkImpl::SetShareHandle(CURL *curl_handle)
 size_t QAQNetworkImpl::WriteMemoryCallback(void *buffer, size_t size, size_t count, void * stream)
 {
 	QAQNetworkImpl* pStream = static_cast<QAQNetworkImpl *>(stream);
-
 	if (pStream)
 	{
-		if (pStream->is_cancel_)
-		{
-			return 0;
-		}
-		pStream->result_.append((char *)buffer, size * count);
-		return size * count;
+		return pStream->OnWrite((const char *)buffer, size*count);
 	}
 	return 0;
 };

@@ -28,11 +28,13 @@ public:
 
 	virtual void ASyncPost2(QAQNetworkReq *, const char*post_data, QAQNetworkInterface *) override;
 
+	virtual const char * GetMemPtr() override;
+
+	virtual int GetMemLen() override;
 protected:
 	virtual void Stop() override;
 
 	virtual void CleanInterface() override;
-
 
 	void DeleteReply();
 
@@ -44,6 +46,8 @@ protected:
 
 	int OnProgress(double t,double d);
 
+	int OnWrite(const char *data ,int len);
+
 	static int ProgressCallback(char *user,
 		double t, /* dltotal */
 		double d, /* dlnow */
@@ -53,6 +57,7 @@ protected:
 	static size_t WriteMemoryCallback(void *ptr, size_t size, size_t nmemb, void *data);
 
 
+	std::mutex mutex_;
 	std::atomic_bool is_cancel_;
 	std::atomic_bool is_running_;
 	std::thread async_thread_;

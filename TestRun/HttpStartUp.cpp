@@ -18,7 +18,7 @@ void HttpStartUp::Request()
 {
 
 
-	request->SetUrl("http://iso.mirrors.ustc.edu.cn/qtproject/archive/qt/5.12/5.12.1/qt-opensource-mac-x64-5.12.1.dmg");
+	request->SetUrl("http://hc.yinyuetai.com/uploads/videos/common/02D30168547A579F07E92D27B0DA34D0.mp4?sc=068dd881b47be705");
 
 	////http://obs.qaqgame.com/speed/download/QAQGAME_INSTALL_V3.1.2.79_official.exe
 	////http://iso.mirrors.ustc.edu.cn/qtproject/archive/qt/5.12/5.12.1/qt-opensource-mac-x64-5.12.1.dmg
